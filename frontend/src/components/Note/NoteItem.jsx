@@ -1,24 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Star, 
   Folder, 
   Tag, 
   Clock,
-  MoreVertical,
   Trash2,
   Edit
 } from 'lucide-react';
 import api from '../../api/axios';
 
 const NoteItem = ({ note, onDelete, onToggleFavorite }) => {
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const handleDelete = async () => {
     if (window.confirm('Apakah Anda yakin ingin menghapus catatan ini?')) {
+      setIsDeleting(true);
       try {
         await api.delete(`/api/notes/${note.id}`);
         onDelete(note.id);
       } catch (error) {
         console.error('Error deleting note:', error);
+        setIsDeleting(false);
       }
     }
   };
@@ -49,10 +52,11 @@ const NoteItem = ({ note, onDelete, onToggleFavorite }) => {
           </p>
         </div>
         
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 ml-4">
           <button
             onClick={handleToggleFavorite}
-            className="p-1 hover:bg-yellow-50 rounded"
+            className="p-2 hover:bg-yellow-50 rounded-full transition-colors"
+            title={note.is_favorite ? "Hapus dari favorit" : "Tambahkan ke favorit"}
           >
             <Star
               size={20}
@@ -64,28 +68,25 @@ const NoteItem = ({ note, onDelete, onToggleFavorite }) => {
             />
           </button>
           
-          <div className="relative group">
-            <button className="p-1 hover:bg-gray-100 rounded">
-              <MoreVertical size={20} className="text-gray-400" />
-            </button>
-            
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 hidden group-hover:block">
-              <Link
-                to={`/notes/${note.id}/edit`}
-                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                <Edit size={16} className="mr-2" />
-                Edit
-              </Link>
-              <button
-                onClick={handleDelete}
-                className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-              >
-                <Trash2 size={16} className="mr-2" />
-                Hapus
-              </button>
-            </div>
-          </div>
+          <Link
+            to={`/notes/${note.id}/edit`}
+            className="p-2 hover:bg-blue-50 rounded-full transition-colors"
+            title="Edit catatan"
+          >
+            <Edit size={20} className="text-gray-400 hover:text-blue-600" />
+          </Link>
+          
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="p-2 hover:bg-red-50 rounded-full transition-colors disabled:opacity-50"
+            title="Hapus catatan"
+          >
+            <Trash2 
+              size={20} 
+              className={`${isDeleting ? 'text-red-300' : 'text-gray-400 hover:text-red-600'}`} 
+            />
+          </button>
         </div>
       </div>
       
