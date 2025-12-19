@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Folder, FileText, Edit, Trash2, MoreVertical } from 'lucide-react';
+import { Folder, FileText, Edit, Trash2, Star } from 'lucide-react';
 import Modal from '../UI/Modal';
 import FolderForm from './FolderForm';
 import api from '../../api/axios';
 
-const FolderItem = ({ folder, onDelete, onUpdate }) => {
+const FolderItem = ({ folder, onDelete, onUpdate, onToggleFavorite }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -21,6 +21,17 @@ const FolderItem = ({ folder, onDelete, onUpdate }) => {
   const handleUpdateSuccess = () => {
     setShowEditModal(false);
     onUpdate();
+  };
+
+  const handleToggleFavorite = async () => {
+    try {
+      await api.patch(`/api/folders/${folder.id}`, {
+        is_favorite: !folder.is_favorite
+      });
+      onToggleFavorite(folder.id, !folder.is_favorite);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
   };
 
   return (
@@ -45,27 +56,36 @@ const FolderItem = ({ folder, onDelete, onUpdate }) => {
             </div>
           </div>
           
-          <div className="relative group">
-            <button className="p-1 hover:bg-gray-100 rounded">
-              <MoreVertical size={20} className="text-gray-400" />
+          <div className="flex items-center space-x-2">
+            {/* Favorite Button */}
+            <button
+              onClick={handleToggleFavorite}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title={folder.is_favorite ? "Hapus dari favorit" : "Tambahkan ke favorit"}
+            >
+              <Star 
+                size={20} 
+                className={folder.is_favorite ? "text-yellow-500 fill-yellow-500" : "text-gray-400"} 
+              />
             </button>
             
-            <div className="absolute right-0 mt-2 w-32 bg-white rounded-md shadow-lg z-10 hidden group-hover:block">
-              <button
-                onClick={() => setShowEditModal(true)}
-                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                <Edit size={16} className="mr-2" />
-                Edit
-              </button>
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-              >
-                <Trash2 size={16} className="mr-2" />
-                Hapus
-              </button>
-            </div>
+            {/* Edit Button */}
+            <button
+              onClick={() => setShowEditModal(true)}
+              className="flex items-center p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Edit folder"
+            >
+              <Edit size={20} className="text-blue-600" />
+            </button>
+            
+            {/* Delete Button */}
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Hapus folder"
+            >
+              <Trash2 size={20} className="text-red-600" />
+            </button>
           </div>
         </div>
       </div>
