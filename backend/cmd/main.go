@@ -32,11 +32,15 @@ func main() {
 	r.Use(chimiddleware.Recoverer) // Recover dari panic
 
 	// CORS middleware
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:5173"
+	}
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173", "http://localhost:3000"}, // Frontend URL
+		AllowedOrigins:   []string{frontendURL, "http://localhost:5173", "*"}, // * untuk development
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
-		AllowCredentials: true,
+		AllowCredentials: false, // Set false untuk wildcard origin
 	}))
 
 	// Routes tanpa auth
