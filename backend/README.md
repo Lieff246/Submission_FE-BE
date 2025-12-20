@@ -15,8 +15,7 @@ Backend untuk aplikasi catatan pribadi menggunakan **Go + Chi Router + MySQL + J
 ```
 backend/
 ├── cmd/
-│   └── api/
-│       └── main.go              # Entry point aplikasi
+│   └── main.go                  # Entry point aplikasi
 ├── internal/
 │   ├── database/
 │   │   └── database.go          # Koneksi MySQL
@@ -48,6 +47,7 @@ backend/
 ### 1. Install Go
 
 Pastikan Go sudah terinstall (versi 1.21 atau lebih baru):
+
 ```bash
 go version
 ```
@@ -59,6 +59,7 @@ Install MySQL atau gunakan XAMPP. Pastikan MySQL service sudah berjalan.
 ### 3. Buat Database
 
 Buka MySQL dan buat database baru:
+
 ```sql
 CREATE DATABASE notes_app;
 ```
@@ -66,11 +67,13 @@ CREATE DATABASE notes_app;
 ### 4. Setup Environment Variables
 
 Copy file `.env.example` menjadi `.env`:
+
 ```bash
 copy .env.example .env
 ```
 
 Edit `.env` sesuai konfigurasi MySQL kamu:
+
 ```
 DB_HOST=localhost
 DB_PORT=3306
@@ -91,6 +94,7 @@ go mod download
 ### 6. Jalankan Migrasi Database
 
 Jalankan SQL script untuk membuat tabel:
+
 ```bash
 # Buka MySQL
 mysql -u root -p notes_app < migrations/001_create_tables.sql
@@ -110,46 +114,47 @@ Server akan berjalan di `http://localhost:8080`
 
 ### Authentication (Public)
 
-| Method | Endpoint | Deskripsi |
-|--------|----------|-----------|
-| POST | `/api/register` | Registrasi user baru |
-| POST | `/api/login` | Login user |
+| Method | Endpoint        | Deskripsi            |
+| ------ | --------------- | -------------------- |
+| POST   | `/api/register` | Registrasi user baru |
+| POST   | `/api/login`    | Login user           |
 
 ### Folders (Protected - Butuh JWT)
 
-| Method | Endpoint | Deskripsi |
-|--------|----------|-----------|
-| GET | `/api/folders` | Ambil semua folder |
-| POST | `/api/folders` | Buat folder baru |
-| PUT | `/api/folders/:id` | Update folder |
-| DELETE | `/api/folders/:id` | Hapus folder |
+| Method | Endpoint           | Deskripsi          |
+| ------ | ------------------ | ------------------ |
+| GET    | `/api/folders`     | Ambil semua folder |
+| POST   | `/api/folders`     | Buat folder baru   |
+| PUT    | `/api/folders/:id` | Update folder      |
+| DELETE | `/api/folders/:id` | Hapus folder       |
 
 ### Notes (Protected - Butuh JWT)
 
-| Method | Endpoint | Deskripsi |
-|--------|----------|-----------|
-| GET | `/api/notes` | Ambil semua catatan |
-| GET | `/api/notes?folder_id=1` | Filter catatan by folder |
-| GET | `/api/notes?favorite=true` | Filter catatan favorit |
-| GET | `/api/notes?search=keyword` | Search catatan by title/content |
-| GET | `/api/notes/:id` | Ambil detail catatan |
-| POST | `/api/notes` | Buat catatan baru |
-| PUT | `/api/notes/:id` | Update catatan |
-| DELETE | `/api/notes/:id` | Hapus catatan |
+| Method | Endpoint                    | Deskripsi                       |
+| ------ | --------------------------- | ------------------------------- |
+| GET    | `/api/notes`                | Ambil semua catatan             |
+| GET    | `/api/notes?folder_id=1`    | Filter catatan by folder        |
+| GET    | `/api/notes?favorite=true`  | Filter catatan favorit          |
+| GET    | `/api/notes?search=keyword` | Search catatan by title/content |
+| GET    | `/api/notes/:id`            | Ambil detail catatan            |
+| POST   | `/api/notes`                | Buat catatan baru               |
+| PUT    | `/api/notes/:id`            | Update catatan                  |
+| DELETE | `/api/notes/:id`            | Hapus catatan                   |
 
 ### Tags (Protected - Butuh JWT)
 
-| Method | Endpoint | Deskripsi |
-|--------|----------|-----------|
-| GET | `/api/tags` | Ambil semua tag |
-| POST | `/api/tags` | Buat tag baru |
-| DELETE | `/api/tags/:id` | Hapus tag |
-| POST | `/api/notes/:noteId/tags/:tagId` | Tambah tag ke catatan |
+| Method | Endpoint                         | Deskripsi              |
+| ------ | -------------------------------- | ---------------------- |
+| GET    | `/api/tags`                      | Ambil semua tag        |
+| POST   | `/api/tags`                      | Buat tag baru          |
+| DELETE | `/api/tags/:id`                  | Hapus tag              |
+| POST   | `/api/notes/:noteId/tags/:tagId` | Tambah tag ke catatan  |
 | DELETE | `/api/notes/:noteId/tags/:tagId` | Hapus tag dari catatan |
 
 ## Contoh Request
 
 ### 1. Register
+
 ```bash
 POST http://localhost:8080/api/register
 Content-Type: application/json
@@ -163,6 +168,7 @@ Content-Type: application/json
 ```
 
 ### 2. Login
+
 ```bash
 POST http://localhost:8080/api/login
 Content-Type: application/json
@@ -174,6 +180,7 @@ Content-Type: application/json
 ```
 
 Response:
+
 ```json
 {
   "success": true,
@@ -191,6 +198,7 @@ Response:
 ```
 
 ### 3. Buat Catatan (dengan JWT token)
+
 ```bash
 POST http://localhost:8080/api/notes
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -229,6 +237,7 @@ go build -o server cmd/api/main.go
 ```
 
 Jalankan:
+
 ```bash
 ./server
 ```

@@ -10,27 +10,6 @@ import (
 	"strings"
 )
 
-// Daftar domain email yang diizinkan
-var allowedEmailDomains = map[string]bool{
-	"gmail.com":   true,
-	"yahoo.com":   true,
-	"hotmail.com": true,
-	"outlook.com": true,
-	"icloud.com":  true,
-	"yahoo.co.id": true,
-	"live.com":    true,
-	"aol.com":     true,
-}
-
-// isValidEmailDomain memeriksa apakah domain email diizinkan
-func isValidEmailDomain(email string) bool {
-	parts := strings.Split(email, "@")
-	if len(parts) != 2 {
-		return false
-	}
-	domain := strings.ToLower(parts[1])
-	return allowedEmailDomains[domain]
-}
 
 // Register handler untuk registrasi user baru
 func Register(w http.ResponseWriter, r *http.Request) {
@@ -44,12 +23,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	// Validasi input
 	if strings.TrimSpace(req.Username) == "" || strings.TrimSpace(req.Email) == "" || strings.TrimSpace(req.Password) == "" {
 		utils.WriteError(w, http.StatusBadRequest, "Username, email, dan password wajib diisi")
-		return
-	}
-
-	// Validasi domain email
-	if !isValidEmailDomain(req.Email) {
-		utils.WriteError(w, http.StatusBadRequest, "Email harus menggunakan domain yang diizinkan (@gmail.com, @yahoo.com, dll.)")
 		return
 	}
 
@@ -96,12 +69,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	// Validasi input
 	if strings.TrimSpace(req.Email) == "" || strings.TrimSpace(req.Password) == "" {
 		utils.WriteError(w, http.StatusBadRequest, "Email dan password wajib diisi")
-		return
-	}
-
-	// Validasi domain email
-	if !isValidEmailDomain(req.Email) {
-		utils.WriteError(w, http.StatusBadRequest, "Email harus menggunakan domain yang diizinkan (@gmail.com, @yahoo.com, dll.)")
 		return
 	}
 
