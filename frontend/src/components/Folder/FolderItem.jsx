@@ -1,12 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Folder, FileText, Edit, Trash2, Star } from 'lucide-react';
 import Modal from '../UI/Modal';
 import FolderForm from './FolderForm';
+import NoteItemInFolder from './NoteItemInFolder';
 import api from '../../api/axios';
 
 const FolderItem = ({ folder, onDelete, onUpdate, onToggleFavorite }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [folderNotes, setFolderNotes] = useState([]);
+  const [noteCount, setNoteCount] = useState(0);
+
+  useEffect(() => {
+    const fetchNotes = async () => {
+      try {
+        const response = await api.get(`/api/folders/${folder.id}/notes`);
+        setFolderNotes(response.data.data);
+        setNoteCount(response.data.data.length);
+      } catch (error) {
+        console.error('Error fetching notes:', error);
+      }
+    };
+    fetchNotes();
+  }, [folder.id]);
 
   const handleDelete = async () => {
     try {
@@ -34,6 +51,21 @@ const FolderItem = ({ folder, onDelete, onUpdate, onToggleFavorite }) => {
     }
   };
 
+  const handleShowNotes = () => {
+    setShowNotesModal(true);
+  };
+
+  const handleNoteDelete = (noteId) => {
+    setFolderNotes(prev => prev.filter(note => note.id !== noteId));
+    setNoteCount(prev => prev - 1);
+  };
+
+  const handleNoteToggleFavorite = (noteId) => {
+    setFolderNotes(prev => prev.map(note =>
+      note.id === noteId ? { ...note, is_favorite: !note.is_favorite } : note
+    ));
+  };
+
   return (
     <>
       <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
@@ -43,7 +75,10 @@ const FolderItem = ({ folder, onDelete, onUpdate, onToggleFavorite }) => {
               <Folder className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 
+                className="text-lg font-semibold text-gray-900 cursor-pointer hover:text-blue-600"
+                onClick={handleShowNotes}
+              >
                 {folder.name}
               </h3>
               {folder.description && (
@@ -51,7 +86,7 @@ const FolderItem = ({ folder, onDelete, onUpdate, onToggleFavorite }) => {
               )}
               <div className="flex items-center text-sm text-gray-500 mt-2">
                 <FileText size={14} className="mr-1" />
-                <span>{folder.note_count || 0} catatan</span>
+                <span>{noteCount} catatan</span>
               </div>
             </div>
           </div>
@@ -125,6 +160,29 @@ const FolderItem = ({ folder, onDelete, onUpdate, onToggleFavorite }) => {
               Hapus
             </button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={showNotesModal}
+        onClose={() => setShowNotesModal(false)}
+        title={`Catatan di Folder "${folder.name}"`}
+      >
+        <div className="space-y-4">
+          {folderNotes.length > 0 ? (
+            <div className="grid gap-4">
+              {folderNotes.map(note => (
+                <NoteItemInFolder
+                  key={note.id}
+                  note={note}
+                  onDelete={handleNoteDelete}
+                  onToggleFavorite={handleNoteToggleFavorite}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">Tidak ada catatan di folder ini.</p>
+          )}
         </div>
       </Modal>
     </>
