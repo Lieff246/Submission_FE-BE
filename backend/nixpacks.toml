@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["go"]
+
+[phases.build]
+cmds = ["go build -o notes-api ./cmd"]
+
+[phases.start]
+cmd = "./notes-api"
