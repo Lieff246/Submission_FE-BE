@@ -17,7 +17,7 @@ services:
       - private-net
     ports:
       - "8080:8080"
-
+ 
   frontend:
     build:
       context: ./frontend
