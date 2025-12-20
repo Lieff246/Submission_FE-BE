@@ -28,8 +28,8 @@ func main() {
 	r := chi.NewRouter()
 
 	// Middleware
-	r.Use(chimiddleware.Logger)     // Log setiap request
-	r.Use(chimiddleware.Recoverer)  // Recover dari panic
+	r.Use(chimiddleware.Logger)    // Log setiap request
+	r.Use(chimiddleware.Recoverer) // Recover dari panic
 
 	// CORS middleware
 	r.Use(cors.Handler(cors.Options{
@@ -56,6 +56,7 @@ func main() {
 		// Notes
 		r.Get("/api/notes", handlers.GetNotes)
 		r.Get("/api/notes/{id}", handlers.GetNoteByID)
+		r.Get("/api/folders/{id}/notes", handlers.GetNotesByFolder)
 		r.Post("/api/notes", handlers.CreateNote)
 		r.Put("/api/notes/{id}", handlers.UpdateNote)
 		r.Delete("/api/notes/{id}", handlers.DeleteNote)

@@ -98,6 +98,48 @@ func GetNoteByID(w http.ResponseWriter, r *http.Request) {
 	utils.WriteSuccess(w, "Data catatan berhasil diambil", note)
 }
 
+// GetNotesByFolder mengambil semua catatan dalam folder tertentu
+func GetNotesByFolder(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r)
+	folderID, _ := strconv.Atoi(chi.URLParam(r, "id"))
+
+	// Verifikasi bahwa folder milik user
+	var count int
+	err := database.DB.QueryRow("SELECT COUNT(*) FROM folders WHERE id = ? AND user_id = ?", folderID, userID).Scan(&count)
+	if err != nil || count == 0 {
+		utils.WriteError(w, http.StatusNotFound, "Folder tidak ditemukan")
+		return
+	}
+
+	// Ambil catatan dalam folder
+	query := "SELECT id, user_id, folder_id, title, content, is_favorite, created_at, updated_at FROM notes WHERE user_id = ? AND folder_id = ? ORDER BY created_at DESC"
+	rows, err := database.DB.Query(query, userID, folderID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "Gagal mengambil data catatan")
+		return
+	}
+	defer rows.Close()
+
+	notes := []models.Note{}
+	for rows.Next() {
+		var note models.Note
+		var folderID sql.NullInt64
+		err := rows.Scan(&note.ID, &note.UserID, &folderID, &note.Title, &note.Content, &note.IsFavorite, &note.CreatedAt, &note.UpdatedAt)
+		if err != nil {
+			continue
+		}
+
+		if folderID.Valid {
+			fid := int(folderID.Int64)
+			note.FolderID = &fid
+		}
+
+		notes = append(notes, note)
+	}
+
+	utils.WriteSuccess(w, "Data catatan berhasil diambil", notes)
+}
+
 // CreateNote membuat catatan baru
 func CreateNote(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r)
