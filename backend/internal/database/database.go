@@ -13,22 +13,7 @@ var DB *sql.DB
 
 // Connect membuat koneksi ke MySQL database
 func Connect() error {
-	// Coba gunakan DATABASE_URL dulu (Railway auto-inject)
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL != "" {
-		var err error
-		DB, err = sql.Open("mysql", databaseURL)
-		if err != nil {
-			return fmt.Errorf("error membuka koneksi database: %v", err)
-		}
-		if err = DB.Ping(); err != nil {
-			return fmt.Errorf("error ping database: %v", err)
-		}
-		log.Println("✅ Koneksi database MySQL berhasil (DATABASE_URL)")
-		return nil
-	}
-
-	// Fallback ke manual config
+	// Baca konfigurasi dari environment variables
 	dbUser := os.Getenv("DB_USER")
 	dbPassword := os.Getenv("DB_PASSWORD")
 	dbHost := os.Getenv("DB_HOST")
