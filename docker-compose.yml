@@ -1,0 +1,36 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: notes_backend
+    restart: always
+    environment:
+      DB_HOST: notes_mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: notes_app
+      JWT_SECRET: super-secret-key-min-32-char
+      PORT: 8080
+    networks:
+      - private-net
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: notes_frontend
+    restart: always
+    depends_on:
+      - backend
+    networks:
+      - private-net
+    ports:
+      - "3000:80"
+
+networks:
+  private-net:
+    external: true
