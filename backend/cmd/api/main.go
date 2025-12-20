@@ -62,6 +62,7 @@ func main() {
 
 		// Tags
 		r.Get("/api/tags", handlers.GetTags)
+		r.Get("/api/tags/{id}/notes", handlers.GetNotesByTag)
 		r.Post("/api/tags", handlers.CreateTag)
 		r.Delete("/api/tags/{id}", handlers.DeleteTag)
 

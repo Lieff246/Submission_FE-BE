@@ -12,6 +12,7 @@ type Note struct {
 	IsFavorite bool      `json:"is_favorite"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
+	Tags       []Tag     `json:"tags,omitempty"` // Include tags
 }
 
 // NoteWithTags untuk note yang sudah include tags-nya
