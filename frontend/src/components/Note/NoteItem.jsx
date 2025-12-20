@@ -17,6 +17,17 @@ const NoteItem = ({ note, onDelete, onToggleFavorite }) => {
     if (window.confirm('Apakah Anda yakin ingin menghapus catatan ini?')) {
       setIsDeleting(true);
       try {
+        // Ambil detail note untuk mendapatkan tags
+        const noteResponse = await api.get(`/api/notes/${note.id}`);
+        const noteData = noteResponse.data.data;
+        const tags = noteData.tags || [];
+        
+        // Hapus semua tag assignments
+        for (const tag of tags) {
+          await api.delete(`/api/notes/${note.id}/tags/${tag.id}`);
+        }
+        
+        // Hapus note
         await api.delete(`/api/notes/${note.id}`);
         onDelete(note.id);
       } catch (error) {
@@ -92,17 +103,31 @@ const NoteItem = ({ note, onDelete, onToggleFavorite }) => {
       
       <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t">
         <div className="flex items-center space-x-4">
-          {note.folder && (
+          {note.folder_name && (
             <div className="flex items-center">
               <Folder size={14} className="mr-1" />
-              <span>{note.folder.name}</span>
+              <span>{note.folder_name}</span>
             </div>
           )}
           
           {note.tags && note.tags.length > 0 && (
-            <div className="flex items-center">
+            <div className="flex items-center space-x-1">
               <Tag size={14} className="mr-1" />
-              <span>{note.tags.length} tag</span>
+              <div className="flex flex-wrap gap-1">
+                {note.tags.slice(0, 3).map(tag => (
+                  <span
+                    key={tag.id}
+                    className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full"
+                  >
+                    {tag.name}
+                  </span>
+                ))}
+                {note.tags.length > 3 && (
+                  <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                    +{note.tags.length - 3}
+                  </span>
+                )}
+              </div>
             </div>
           )}
         </div>

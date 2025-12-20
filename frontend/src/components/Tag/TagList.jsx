@@ -29,6 +29,10 @@ const TagList = ({ onAddClick }) => {
     setTags(tags.filter(tag => tag.id !== tagId));
   };
 
+  const handleUpdate = () => {
+    fetchTags();
+  };
+
   const filteredTags = tags.filter(tag =>
     tag.name.toLowerCase().includes(search.toLowerCase())
   );

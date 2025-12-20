@@ -8,4 +8,5 @@ type Tag struct {
 	UserID    int       `json:"user_id"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"created_at"`
+	NoteCount int       `json:"note_count"`
 }

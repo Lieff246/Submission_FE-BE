@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import api from '../../api/axios';
 
-const NoteItemInFolder = ({ note, onDelete, onToggleFavorite }) => {
+const NoteItemInTag = ({ note, onDelete, onToggleFavorite }) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -143,4 +143,4 @@ const NoteItemInFolder = ({ note, onDelete, onToggleFavorite }) => {
   );
 };
 
-export default NoteItemInFolder;
+export default NoteItemInTag;

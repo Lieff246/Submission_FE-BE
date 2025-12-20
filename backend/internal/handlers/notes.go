@@ -23,7 +23,7 @@ func GetNotes(w http.ResponseWriter, r *http.Request) {
 	favorite := r.URL.Query().Get("favorite")
 	search := r.URL.Query().Get("search")
 
-	query := "SELECT id, user_id, folder_id, title, content, is_favorite, created_at, updated_at FROM notes WHERE user_id = ?"
+	query := "SELECT n.id, n.user_id, n.folder_id, f.name as folder_name, n.title, n.content, n.is_favorite, n.created_at, n.updated_at FROM notes n LEFT JOIN folders f ON n.folder_id = f.id AND f.user_id = n.user_id WHERE n.user_id = ?"
 	args := []interface{}{userID}
 
 	if folderID != "" {
@@ -54,7 +54,8 @@ func GetNotes(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var note models.Note
 		var folderID sql.NullInt64
-		err := rows.Scan(&note.ID, &note.UserID, &folderID, &note.Title, &note.Content, &note.IsFavorite, &note.CreatedAt, &note.UpdatedAt)
+		var folderName sql.NullString
+		err := rows.Scan(&note.ID, &note.UserID, &folderID, &folderName, &note.Title, &note.Content, &note.IsFavorite, &note.CreatedAt, &note.UpdatedAt)
 		if err != nil {
 			continue
 		}
@@ -62,6 +63,15 @@ func GetNotes(w http.ResponseWriter, r *http.Request) {
 		if folderID.Valid {
 			fid := int(folderID.Int64)
 			note.FolderID = &fid
+		}
+		if folderName.Valid {
+			note.FolderName = folderName.String
+		}
+
+		// Ambil tags untuk note ini
+		tags, err := getTagsForNote(note.ID, userID)
+		if err == nil {
+			note.Tags = tags
 		}
 
 		notes = append(notes, note)
@@ -118,7 +128,7 @@ func GetNotesByFolder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Ambil catatan dalam folder
-	query := "SELECT id, user_id, folder_id, title, content, is_favorite, created_at, updated_at FROM notes WHERE user_id = ? AND folder_id = ? ORDER BY created_at DESC"
+	query := "SELECT n.id, n.user_id, n.folder_id, f.name as folder_name, n.title, n.content, n.is_favorite, n.created_at, n.updated_at FROM notes n LEFT JOIN folders f ON n.folder_id = f.id AND f.user_id = n.user_id WHERE n.user_id = ? AND n.folder_id = ? ORDER BY n.created_at DESC"
 	rows, err := database.DB.Query(query, userID, folderID)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "Gagal mengambil data catatan")
@@ -130,7 +140,8 @@ func GetNotesByFolder(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var note models.Note
 		var folderID sql.NullInt64
-		err := rows.Scan(&note.ID, &note.UserID, &folderID, &note.Title, &note.Content, &note.IsFavorite, &note.CreatedAt, &note.UpdatedAt)
+		var folderName sql.NullString
+		err := rows.Scan(&note.ID, &note.UserID, &folderID, &folderName, &note.Title, &note.Content, &note.IsFavorite, &note.CreatedAt, &note.UpdatedAt)
 		if err != nil {
 			continue
 		}
@@ -138,6 +149,76 @@ func GetNotesByFolder(w http.ResponseWriter, r *http.Request) {
 		if folderID.Valid {
 			fid := int(folderID.Int64)
 			note.FolderID = &fid
+		}
+		if folderName.Valid {
+			note.FolderName = folderName.String
+		}
+
+		// Ambil tags untuk note ini
+		tags, err := getTagsForNote(note.ID, userID)
+		if err == nil {
+			note.Tags = tags
+		}
+
+		notes = append(notes, note)
+	}
+
+	utils.WriteSuccess(w, "Data catatan berhasil diambil", notes)
+}
+
+// GetNotesByTag mengambil semua catatan yang memiliki tag tertentu
+func GetNotesByTag(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r)
+	tagID, _ := strconv.Atoi(chi.URLParam(r, "id"))
+
+	// Cek apakah tag milik user
+	var count int
+	checkTag := "SELECT COUNT(*) FROM tags WHERE id = ? AND user_id = ?"
+	database.DB.QueryRow(checkTag, tagID, userID).Scan(&count)
+	if count == 0 {
+		utils.WriteError(w, http.StatusNotFound, "Tag tidak ditemukan")
+		return
+	}
+
+	// Query notes yang memiliki tag ini
+	query := `
+		SELECT DISTINCT n.id, n.user_id, n.folder_id, f.name as folder_name, n.title, n.content, n.is_favorite, n.created_at, n.updated_at 
+		FROM notes n 
+		LEFT JOIN folders f ON n.folder_id = f.id AND f.user_id = n.user_id
+		INNER JOIN note_tags nt ON n.id = nt.note_id 
+		WHERE nt.tag_id = ? AND n.user_id = ?
+		ORDER BY n.created_at DESC
+	`
+
+	rows, err := database.DB.Query(query, tagID, userID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "Gagal mengambil data catatan")
+		return
+	}
+	defer rows.Close()
+
+	notes := []models.Note{}
+	for rows.Next() {
+		var note models.Note
+		var folderID sql.NullInt64
+		var folderName sql.NullString
+		err := rows.Scan(&note.ID, &note.UserID, &folderID, &folderName, &note.Title, &note.Content, &note.IsFavorite, &note.CreatedAt, &note.UpdatedAt)
+		if err != nil {
+			continue
+		}
+
+		if folderID.Valid {
+			fid := int(folderID.Int64)
+			note.FolderID = &fid
+		}
+		if folderName.Valid {
+			note.FolderName = folderName.String
+		}
+
+		// Ambil tags untuk note ini
+		tags, err := getTagsForNote(note.ID, userID)
+		if err == nil {
+			note.Tags = tags
 		}
 
 		notes = append(notes, note)

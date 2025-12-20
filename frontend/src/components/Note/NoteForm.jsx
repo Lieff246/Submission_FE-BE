@@ -20,6 +20,7 @@ const NoteForm = () => {
     const [folders, setFolders] = useState([]);
     const [tags, setTags] = useState([]);
     const [availableTags, setAvailableTags] = useState([]);
+    const [currentTags, setCurrentTags] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -57,6 +58,7 @@ const NoteForm = () => {
             
             // Set selected tags
             setTags(note.tags || []);
+            setCurrentTags(note.tags ? note.tags.map(tag => tag.id) : []);
         } catch (error) {
             console.error('Error fetching note:', error);
             navigate('/notes');
@@ -101,9 +103,39 @@ const NoteForm = () => {
 
         try {
             if (id) {
-                await api.put(`/api/notes/${id}`, formData);
+                // Edit note - update note dulu tanpa tags, lalu handle tag changes
+                const noteData = { ...formData };
+                delete noteData.tag_ids;
+                
+                await api.put(`/api/notes/${id}`, noteData);
+                
+                // Handle tag changes
+                const currentTagIds = currentTags;
+                const newTagIds = formData.tag_ids;
+                
+                // Tags to add
+                const tagsToAdd = newTagIds.filter(id => !currentTagIds.includes(id));
+                for (const tagId of tagsToAdd) {
+                    await api.post(`/api/notes/${id}/tags/${tagId}`);
+                }
+                
+                // Tags to remove
+                const tagsToRemove = currentTagIds.filter(id => !newTagIds.includes(id));
+                for (const tagId of tagsToRemove) {
+                    await api.delete(`/api/notes/${id}/tags/${tagId}`);
+                }
             } else {
-                await api.post('/api/notes', formData);
+                // Create note - buat note dulu tanpa tags, lalu assign tags satu per satu
+                const noteData = { ...formData };
+                delete noteData.tag_ids; // Hapus tag_ids dari data note
+                
+                const noteResponse = await api.post('/api/notes', noteData);
+                const noteId = noteResponse.data.data.id;
+                
+                // Assign tags menggunakan endpoint khusus
+                for (const tagId of formData.tag_ids) {
+                    await api.post(`/api/notes/${noteId}/tags/${tagId}`);
+                }
             }
             navigate('/notes');
         } catch (err) {

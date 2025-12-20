@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tag, Trash2 } from 'lucide-react';
 import Modal from '../UI/Modal';
+import NoteItemInTag from './NoteItemInTag';
 import api from '../../api/axios';
 
 const TagItem = ({ tag, onDelete, onUpdate }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [tagNotes, setTagNotes] = useState([]);
   const [editName, setEditName] = useState(tag.name);
   const [loading, setLoading] = useState(false);
 
@@ -22,6 +25,26 @@ const TagItem = ({ tag, onDelete, onUpdate }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleShowNotes = async () => {
+    try {
+      const response = await api.get(`/api/tags/${tag.id}/notes`);
+      setTagNotes(response.data.data);
+      setShowNotesModal(true);
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+    }
+  };
+
+  const handleNoteDelete = (noteId) => {
+    setTagNotes(prev => prev.filter(note => note.id !== noteId));
+  };
+
+  const handleNoteToggleFavorite = (noteId) => {
+    setTagNotes(prev => prev.map(note =>
+      note.id === noteId ? { ...note, is_favorite: !note.is_favorite } : note
+    ));
   };
 
   const handleDelete = async () => {
@@ -42,7 +65,7 @@ const TagItem = ({ tag, onDelete, onUpdate }) => {
       <div className="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between hover:shadow-md transition-shadow">
         <div 
           className="flex items-center cursor-pointer flex-1"
-          onClick={() => setShowEditModal(true)}
+          onClick={handleShowNotes}
         >
           <Tag size={16} className="text-purple-600 mr-2" />
           <span className="text-gray-900">{tag.name}</span>
@@ -117,6 +140,29 @@ const TagItem = ({ tag, onDelete, onUpdate }) => {
               {loading ? 'Menghapus...' : 'Hapus'}
             </button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={showNotesModal}
+        onClose={() => setShowNotesModal(false)}
+        title={`Catatan dengan Tag "${tag.name}"`}
+      >
+        <div className="space-y-4">
+          {tagNotes.length > 0 ? (
+            <div className="grid gap-4">
+              {tagNotes.map(note => (
+                <NoteItemInTag
+                  key={note.id}
+                  note={note}
+                  onDelete={handleNoteDelete}
+                  onToggleFavorite={handleNoteToggleFavorite}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">Tidak ada catatan dengan tag ini.</p>
+          )}
         </div>
       </Modal>
     </>

@@ -57,13 +57,13 @@ func main() {
 		r.Get("/api/notes", handlers.GetNotes)
 		r.Get("/api/notes/{id}", handlers.GetNoteByID)
 		r.Get("/api/folders/{id}/notes", handlers.GetNotesByFolder)
+		r.Get("/api/tags/{id}/notes", handlers.GetNotesByTag)
 		r.Post("/api/notes", handlers.CreateNote)
 		r.Put("/api/notes/{id}", handlers.UpdateNote)
 		r.Delete("/api/notes/{id}", handlers.DeleteNote)
 
 		// Tags
 		r.Get("/api/tags", handlers.GetTags)
-		r.Get("/api/tags/{id}/notes", handlers.GetNotesByTag)
 		r.Post("/api/tags", handlers.CreateTag)
 		r.Delete("/api/tags/{id}", handlers.DeleteTag)
 
