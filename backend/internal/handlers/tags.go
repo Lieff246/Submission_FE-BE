@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"notes-api/internal/database"
@@ -89,6 +90,56 @@ func DeleteTag(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteSuccess(w, "Tag berhasil dihapus", nil)
+}
+
+// GetNotesByTag mengambil semua catatan yang memiliki tag tertentu
+func GetNotesByTag(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r)
+	tagID, _ := strconv.Atoi(chi.URLParam(r, "id"))
+
+	// Cek apakah tag milik user
+	var count int
+	checkTag := "SELECT COUNT(*) FROM tags WHERE id = ? AND user_id = ?"
+	database.DB.QueryRow(checkTag, tagID, userID).Scan(&count)
+	if count == 0 {
+		utils.WriteError(w, http.StatusNotFound, "Tag tidak ditemukan")
+		return
+	}
+
+	// Query notes yang memiliki tag ini
+	query := `
+		SELECT DISTINCT n.id, n.user_id, n.folder_id, n.title, n.content, n.is_favorite, n.created_at, n.updated_at 
+		FROM notes n 
+		INNER JOIN note_tags nt ON n.id = nt.note_id 
+		WHERE nt.tag_id = ? AND n.user_id = ?
+		ORDER BY n.created_at DESC
+	`
+
+	rows, err := database.DB.Query(query, tagID, userID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "Gagal mengambil data catatan")
+		return
+	}
+	defer rows.Close()
+
+	notes := []models.Note{}
+	for rows.Next() {
+		var note models.Note
+		var folderID sql.NullInt64
+		err := rows.Scan(&note.ID, &note.UserID, &folderID, &note.Title, &note.Content, &note.IsFavorite, &note.CreatedAt, &note.UpdatedAt)
+		if err != nil {
+			continue
+		}
+
+		if folderID.Valid {
+			fid := int(folderID.Int64)
+			note.FolderID = &fid
+		}
+
+		notes = append(notes, note)
+	}
+
+	utils.WriteSuccess(w, "Data catatan berhasil diambil", notes)
 }
 
 // AssignTagToNote menambahkan tag ke catatan

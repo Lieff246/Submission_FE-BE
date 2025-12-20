@@ -95,6 +95,12 @@ func GetNoteByID(w http.ResponseWriter, r *http.Request) {
 		note.FolderID = &fid
 	}
 
+	// Ambil tags untuk note ini
+	tags, err := getTagsForNote(noteID, userID)
+	if err == nil {
+		note.Tags = tags
+	}
+
 	utils.WriteSuccess(w, "Data catatan berhasil diambil", note)
 }
 
@@ -220,4 +226,32 @@ func DeleteNote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteSuccess(w, "Catatan berhasil dihapus", nil)
+}
+
+// getTagsForNote helper function untuk mengambil tags dari sebuah note
+func getTagsForNote(noteID, userID int) ([]models.Tag, error) {
+	query := `
+		SELECT t.id, t.user_id, t.name, t.created_at 
+		FROM tags t 
+		INNER JOIN note_tags nt ON t.id = nt.tag_id 
+		WHERE nt.note_id = ? AND t.user_id = ?
+		ORDER BY t.name ASC
+	`
+
+	rows, err := database.DB.Query(query, noteID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tags := []models.Tag{}
+	for rows.Next() {
+		var tag models.Tag
+		if err := rows.Scan(&tag.ID, &tag.UserID, &tag.Name, &tag.CreatedAt); err != nil {
+			continue
+		}
+		tags = append(tags, tag)
+	}
+
+	return tags, nil
 }
